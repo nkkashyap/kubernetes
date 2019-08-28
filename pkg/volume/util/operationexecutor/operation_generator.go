@@ -17,6 +17,7 @@ limitations under the License.
 package operationexecutor
 
 import (
+	"strconv"
 	goerrors "errors"
 	"fmt"
 	"path/filepath"
@@ -30,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	clientset "k8s.io/client-go/kubernetes"
+	storage "k8s.io/api/storage/v1"
 	"k8s.io/client-go/tools/record"
 	volerr "k8s.io/cloud-provider/volume/errors"
 	csilib "k8s.io/csi-translation-lib"
@@ -622,6 +624,30 @@ func (og *operationGenerator) GenerateMountVolumeFunc(
 			volumeToMount.Pod.Spec.SecurityContext.FSGroup != nil {
 			fsGroup = volumeToMount.Pod.Spec.SecurityContext.FSGroup
 		}
+		var suppGID *int64
+		//fmt.Printf("DEBUG: %+v\n", volumeToMount.VolumeSpec)
+		if volumeToMount.VolumeSpec.PersistentVolume != nil {
+			//fmt.Printf("DEBUG: %+v\n", volumeToMount.VolumeSpec.PersistentVolume)
+			var storageClass  *storage.StorageClass
+			scName := volumeToMount.VolumeSpec.PersistentVolume.Spec.StorageClassName
+			_, msg := volumeToMount.GenerateMsg("SuppGID: ", fmt.Sprintf("SC: %q", scName))
+			klog.V(1).Infof(msg)
+			if len(scName) >  0 {
+				storageClass, err = og.kubeClient.StorageV1().StorageClasses().Get(scName, metav1.GetOptions{})
+				if err == nil{
+					fmt.Printf("DEBUG SC Param: %+v\n", storageClass.Parameters)
+					if val, chk := storageClass.Parameters["suppGID"]; chk {
+						gid, _ := strconv.ParseInt(val, 10, 64)
+						suppGID = &gid
+						_, msg = volumeToMount.GenerateMsg("SuppGID: ", fmt.Sprintf("GID: %q", val))
+						klog.V(1).Infof(msg)
+					}
+				} else {
+					fmt.Printf("DEBUG SC Fetch Error:-\n")
+					fmt.Println(err)
+				}
+			}
+		}
 
 		devicePath := volumeToMount.DevicePath
 		if volumeAttacher != nil {
@@ -699,6 +725,7 @@ func (og *operationGenerator) GenerateMountVolumeFunc(
 			FsGroup:     fsGroup,
 			DesiredSize: volumeToMount.DesiredSizeLimit,
 			PodUID:      string(volumeToMount.Pod.UID),
+			SuppGID:     suppGID,
 		})
 		if mountErr != nil {
 			// On failure, return error. Caller will log and retry.

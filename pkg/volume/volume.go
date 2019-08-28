@@ -106,6 +106,7 @@ type MounterArgs struct {
 	FsGroup     *int64
 	DesiredSize *resource.Quantity
 	PodUID      string
+	SuppGID     *int64
 }
 
 // Mounter interface provides methods to set up/mount the volume.

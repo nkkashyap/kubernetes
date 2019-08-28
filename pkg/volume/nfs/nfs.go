@@ -17,6 +17,7 @@ limitations under the License.
 package nfs
 
 import (
+	"syscall"
 	"fmt"
 	"os"
 	"runtime"
@@ -280,6 +281,12 @@ func (nfsMounter *nfsMounter) SetUpAt(dir string, mounterArgs volume.MounterArgs
 		}
 		os.Remove(dir)
 		return err
+	}
+	if mounterArgs.SuppGID != nil {
+		fInfo, _ := os.Stat(dir)
+		stat, _ := fInfo.Sys().(*syscall.Stat_t)
+		err = os.Chown(dir, int(stat.Uid), int((*mounterArgs.SuppGID)))
+		err = os.Chmod(dir, 0775)
 	}
 	return nil
 }
