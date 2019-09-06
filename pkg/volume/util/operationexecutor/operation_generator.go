@@ -20,8 +20,8 @@ import (
 	goerrors "errors"
 	"fmt"
 	"path/filepath"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -658,13 +658,13 @@ func (og *operationGenerator) GenerateMountVolumeFunc(
 		}
 		var grpID *int64
 		if volumeToMount.VolumeSpec.PersistentVolume != nil {
-			var storageClass  *storage.StorageClass
+			var storageClass *storage.StorageClass
 			scName := volumeToMount.VolumeSpec.PersistentVolume.Spec.StorageClassName
 			_, msg := volumeToMount.GenerateMsg("Set GID: ", fmt.Sprintf("SC: %q", scName))
 			klog.V(1).Infof(msg)
-			if len(scName) >  0 {
+			if len(scName) > 0 {
 				storageClass, err = og.kubeClient.StorageV1().StorageClasses().Get(scName, metav1.GetOptions{})
-				if err == nil{
+				if err == nil {
 					if val, chk := storageClass.Parameters["grpID"]; chk {
 						gid, _ := strconv.ParseInt(val, 10, 64)
 						grpID = &gid
@@ -752,7 +752,7 @@ func (og *operationGenerator) GenerateMountVolumeFunc(
 		mountErr := volumeMounter.SetUp(volume.MounterArgs{
 			FsGroup:     fsGroup,
 			DesiredSize: volumeToMount.DesiredSizeLimit,
-			GrpID:     grpID,
+			GrpID:       grpID,
 		})
 		if mountErr != nil {
 			// On failure, return error. Caller will log and retry.
