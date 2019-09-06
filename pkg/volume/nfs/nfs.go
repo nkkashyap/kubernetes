@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"syscall"
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -287,6 +288,15 @@ func (nfsMounter *nfsMounter) SetUpAt(dir string, mounterArgs volume.MounterArgs
 		}
 		os.Remove(dir)
 		return err
+	}
+	if mounterArgs.GrpID != nil {
+		fInfo, _ := os.Stat(dir)
+		fStat, _ := fInfo.Sys().(*syscall.Stat_t)
+		err = os.Chown(dir, int(fStat.Uid), int((*mounterArgs.GrpID)))
+		if err != nil {
+			klog.Errorf("Set GID: Unable to chown: %v", err)
+		}
+		_ = os.Chmod(dir, 0775)
 	}
 	return nil
 }

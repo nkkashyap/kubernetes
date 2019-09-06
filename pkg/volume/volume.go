@@ -105,6 +105,7 @@ type Attributes struct {
 type MounterArgs struct {
 	FsGroup     *int64
 	DesiredSize *resource.Quantity
+	GrpID     *int64
 }
 
 // Mounter interface provides methods to set up/mount the volume.
