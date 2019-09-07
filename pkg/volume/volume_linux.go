@@ -91,3 +91,16 @@ func SetVolumeOwnership(mounter Mounter, fsGroup *int64) error {
 		return nil
 	})
 }
+
+func SetGID(path string, gid int) error {
+	var err error
+	fInfo, _ := os.Stat(path)
+	fStat, _ := fInfo.Sys().(*syscall.Stat_t)
+	err = os.Chown(path, int(fStat.Uid), gid)
+	if err != nil {
+		klog.Errorf("Set GID: Unable to chown: %v", err)
+	} else {
+		_ = os.Chmod(path, 0775)
+	}
+	return err
+}

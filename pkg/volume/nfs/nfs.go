@@ -288,6 +288,13 @@ func (nfsMounter *nfsMounter) SetUpAt(dir string, mounterArgs volume.MounterArgs
 		os.Remove(dir)
 		return err
 	}
+	if mounterArgs.GrpID != nil {
+		gid := int((*mounterArgs.GrpID))
+		err = volume.SetGID(dir, gid)
+		if err != nil {
+			klog.Errorf("Set GID: Unable to chown: %v", err)
+		}
+	}
 	return nil
 }
 
