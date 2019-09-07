@@ -102,5 +102,5 @@ func SetGID(path string, gid int) error {
 	} else {
 		_ = os.Chmod(path, 0775)
 	}
-        return err
+	return err
 }

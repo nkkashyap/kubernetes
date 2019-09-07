@@ -22,6 +22,6 @@ func SetVolumeOwnership(mounter Mounter, fsGroup *int64) error {
 	return nil
 }
 
-func SetGID(path string, gid int64) error {
+func SetGID(path string, gid int) error {
 	return nil
 }
